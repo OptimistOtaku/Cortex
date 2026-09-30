@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SIETCH Ground Control</title>
+<style>
+  :root {
+    --bg: #0b0e13; --panel: #121821; --panel2: #18202b; --line: #243040; --text: #e6edf5; --muted: #8a9bb0;
+    --gate: #f2a33a; --good: #3fbf7f; --bad: #e0565b; --priv: #b78cf2; --brain: #5cc8e6;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  header { display: flex; gap: 16px; align-items: center; padding: 14px 20px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+  h1 { font-size: 18px; margin: 0; letter-spacing: .12em; }
+  h1 span { color: var(--gate); }
+  .intent { flex: 1; display: flex; gap: 8px; min-width: 320px; }
+  input, select { background: var(--panel); border: 1px solid var(--line); color: var(--text); padding: 9px 11px; border-radius: 8px; font: inherit; }
+  .intent input { flex: 1; font-size: 15px; }
+  button { background: var(--panel2); color: var(--text); border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; cursor: pointer; font: inherit; }
+  button:hover { border-color: var(--muted); }
+  button.primary { background: var(--gate); color: #1a1205; border-color: var(--gate); font-weight: 600; }
+  button.danger { color: var(--bad); border-color: rgba(224,86,91,.5); }
+  .current { color: var(--muted); font-size: 13px; }
+  .current b { color: var(--gate); }
+  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; padding: 12px 20px; }
+  .tile { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; }
+  .tile .k { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .08em; }
+  .tile .v { font-size: 26px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .tile.gate .v { color: var(--gate); } .tile.dis .v { color: var(--bad); }
+  main { display: grid; grid-template-columns: 290px 1fr; gap: 12px; padding: 0 20px 20px; }
+  @media (max-width: 1000px) { main { grid-template-columns: 1fr; } }
+  section { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px; min-width: 0; }
+  section h2 { margin: 0 0 10px; font-size: 13px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); display: flex; justify-content: space-between; gap: 8px; }
+  .tabs { display: flex; gap: 6px; margin-bottom: 10px; }
+  .tabs button.on { border-color: var(--gate); color: var(--gate); }
+  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 1300px) { .cols { grid-template-columns: 1fr; } }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; max-height: 62vh; overflow: auto; }
+  .list { display: flex; flex-direction: column; gap: 8px; max-height: 64vh; overflow: auto; }
+  .card { background: var(--panel2); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+  .card img { width: 100%; aspect-ratio: 4/3; object-fit: cover; display: block; background: #000; }
+  .textcard { padding: 10px; font-size: 13px; }
+  .textcard .kind { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--brain); font-weight: 700; }
+  .textcard.note .kind { color: var(--good); } .textcard.decision .kind { color: var(--muted); } .textcard.answer .kind { color: var(--gate); }
+  .textcard.superseded { opacity: .5; text-decoration: line-through; }
+  .meta { padding: 6px 8px; font-size: 12px; }
+  .meta .label { font-weight: 600; }
+  .badges { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 4px; }
+  .badge { font-size: 10px; padding: 1px 6px; border-radius: 99px; border: 1px solid var(--line); color: var(--muted); }
+  .badge.priv { color: var(--priv); border-color: var(--priv); } .badge.full { color: var(--good); border-color: var(--good); }
+  .badge.rev { color: var(--gate); border-color: var(--gate); } .badge.brain { color: var(--brain); border-color: var(--brain); }
+  .actions { display: flex; gap: 4px; padding: 0 8px 8px; flex-wrap: wrap; }
+  .actions button { padding: 3px 7px; font-size: 12px; }
+  .actions .yes { color: var(--good); } .actions .no { color: var(--bad); }
+  .evid { display: flex; gap: 4px; margin-top: 6px; flex-wrap: wrap; }
+  .evid img { width: 64px; height: 48px; object-fit: cover; border-radius: 4px; }
+  .evid .pending { width: 64px; height: 48px; border: 1px dashed var(--line); border-radius: 4px; font-size: 10px; color: var(--muted); display: flex; align-items: center; justify-content: center; text-align: center; }
+  .dispute { background: var(--panel2); border: 1px solid rgba(224,86,91,.6); border-radius: 10px; padding: 10px; }
+  .dispute.resolved { border-color: var(--line); opacity: .7; }
+  .vs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+  .vs > div { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 8px; font-size: 13px; }
+  .vs .win { border-color: var(--good); }
+  .nodes .n { padding: 8px; border-radius: 8px; background: var(--panel2); margin-bottom: 6px; }
+  .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
+  .log { font: 12px/1.45 ui-monospace, Consolas, monospace; color: var(--muted); max-height: 34vh; overflow: auto; }
+  .log div { border-bottom: 1px solid var(--line); padding: 3px 0; }
+  .log .k { color: var(--gate); } .log .security { color: var(--bad); }
+  .row { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+  .row input { flex: 1; min-width: 200px; }
+  .qa { background: var(--panel2); border: 1px solid var(--line); border-radius: 10px; padding: 10px; }
+  .qa .q { font-weight: 600; } .qa .a { margin-top: 6px; }
+  .empty { color: var(--muted); padding: 20px; text-align: center; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<header>
+  <h1>SIETCH <span>GROUND CONTROL</span></h1>
+  <form class="intent" id="intentForm">
+    <input id="intentInput" placeholder="Mission intent in one sentence, e.g. &quot;now we care about evidence of past water&quot;" autocomplete="off">
+    <button class="primary">Retask fleet</button>
+  </form>
+  <div class="current">Current intent: <b id="intentNow">…</b></div>
+</header>
+
+<div class="tiles">
+  <div class="tile gate"><div class="k">Fleet conclusions received</div><div class="v" id="nConcl">–</div></div>
+  <div class="tile"><div class="k">Pictures received</div><div class="v" id="nPics">–</div></div>
+  <div class="tile dis"><div class="k">Open disputes</div><div class="v" id="nDisp">–</div></div>
+  <div class="tile"><div class="k">Downlink / uplink</div><div class="v" id="bytes">–</div></div>
+</div>
+
+<main>
+  <div>
+    <section class="nodes"><h2>Fleet</h2><div id="nodes"></div></section>
+    <section style="margin-top:12px"><h2>Security</h2>
+      <div class="current" style="margin-bottom:8px">Commands are HMAC-signed. Try spoofing mission control:</div>
+      <div class="row"><select id="forgeNode"></select><button class="danger" id="forge">Forge a discard</button></div>
+    </section>
+    <section style="margin-top:12px"><h2>Activity</h2><div class="log" id="events"></div></section>
+  </div>
+  <section>
+    <div class="tabs">
+      <button data-tab="concl" class="on">Conclusions &amp; disputes</button>
+      <button data-tab="pics">Pictures received</button>
+      <button data-tab="ask">Ask a robot</button>
+    </div>
+
+    <div id="tab-concl">
+      <div class="cols">
+        <div>
+          <h2 style="margin:0 0 8px;font-size:13px;letter-spacing:.1em;color:var(--muted)">DISPUTES · ROBOTS DISAGREE</h2>
+          <div class="list" id="disputes"></div>
+        </div>
+        <div>
+          <h2 style="margin:0 0 8px;font-size:13px;letter-spacing:.1em;color:var(--muted);display:flex;justify-content:space-between">
+            <span>WHAT THE FLEET CONCLUDED (ARRIVES BEFORE THE PICTURES)</span></h2>
+          <form class="row" id="searchForm"><input id="q" placeholder="Search the fleet's memory (natural language)"><button>Search</button></form>
+          <div id="results"></div>
+          <div class="list" id="concl"></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="tab-pics" hidden>
+      <h2 style="font-size:13px;color:var(--gate);letter-spacing:.1em">WHAT THE SYNC GATE SENT, NEWEST FIRST <em id="gN" style="color:var(--muted)"></em></h2>
+      <div class="grid" id="gateGrid"></div>
+    </div>
+
+    <div id="tab-ask" hidden>
+      <div class="current" style="margin-bottom:8px">The question goes up in the robot's next comms window. The robot's brain answers from its own memory, offline, and the answer (a few hundred bytes) comes down in the following window.</div>
+      <form class="row" id="askForm"><select id="askNode"></select><input id="askQ" placeholder="e.g. What have you seen that suggests past water?"><button class="primary">Ask</button></form>
+      <div class="list" id="questions"></div>
+    </div>
+  </section>
+</main>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const api = (path, body) => fetch(path, body ? { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) } : {}).then(r => r.json());
+const kb = (b) => (b / 1000).toFixed(1) + " KB";
+const esc = (s) => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const ago = (ts) => { const s = Math.round(Date.now() / 1000 - ts); return s < 60 ? s + "s ago" : Math.round(s / 60) + "m ago"; };
+let gateByItem = {};  // item id -> observation point, to show evidence pictures under conclusions
+let tab = "concl";
+
+document.querySelectorAll(".tabs button").forEach(b => b.onclick = () => {
+  tab = b.dataset.tab;
+  document.querySelectorAll(".tabs button").forEach(x => x.classList.toggle("on", x === b));
+  ["concl", "pics", "ask"].forEach(t => $("tab-" + t).hidden = t !== tab);
+  refresh();
+});
+
+function evidence(ids) {
+  return `<div class="evid">${(ids || []).map(id => {
+    const o = gateByItem[id];
+    return o ? `<img src="/img/${esc(o.full || o.thumb)}" title="${esc(o.caption || o.label)}">` : `<div class="pending">picture not yet down</div>`;
+  }).join("")}</div>`;
+}
+
+function textCard(p, actions = true) {
+  const sup = p.superseded ? " superseded" : "";
+  const title = p.kind === "decision" ? `decision · ${esc(p.action || "")}` : p.kind === "note" ? "operator note" : p.kind;
+  const missing = (p.evidence || []).some(id => !gateByItem[id]);
+  return `<div class="card"><div class="textcard ${esc(p.kind)}${sup}">
+    <div class="kind">${title} · ${esc(p.node)} <span style="color:var(--muted);font-weight:400">${esc(p.ref || "")} · ${ago(p.received_at)}</span></div>
+    <div style="margin-top:4px">${esc(p.kind === "answer" ? `Q: ${p.question} — ${p.answer}` : p.text)}</div>
+    <div class="badges"><span class="badge brain">importance ${(p.importance ?? 0).toFixed(2)}</span>
+      ${p.superseded ? `<span class="badge rev">superseded by mission control</span>` : ""}</div>
+    ${evidence(p.evidence)}
+  </div>${actions && missing ? `<div class="actions">
+    <button onclick="reqEvidence('${p.point}')">request evidence</button></div>` : ""}</div>`;
+}
+
+function card(p, withActions = true) {
+  if (p.kind && p.kind !== "observation") return textCard(p, withActions);
+  const img = p.full || p.thumb;
+  const revised = (p.label_history || []).length ? `<span class="badge rev">label revised</span>` : "";
+  return `<div class="card">
+    <img src="/img/${esc(img)}" loading="lazy" alt="${esc(p.label)}" title="${esc(p.caption || "")}">
+    <div class="meta"><span class="label">${esc(p.label)}</span> <span style="color:var(--muted)">· ${esc(p.node)}</span>
+      <div class="badges">${(p.tags || []).map(t => `<span class="badge">${esc(t)}</span>`).join("")}
+        ${p.full ? `<span class="badge full">full-res</span>` : (p.full_progress != null ? `<span class="badge full">full-res ${p.full_progress}%</span>` : "")}${revised}
+        ${p.site !== p.item ? `<span class="badge rev">merged site</span>` : ""}
+        ${p.importance >= 0.8 ? `<span class="badge brain">brain flagged</span>` : ""}
+        ${p.score != null ? `<span class="badge">sim ${p.score.toFixed(3)}</span>` : ""}</div>
+    </div>
+    ${withActions ? `<div class="actions">
+      ${!p.full ? `<button onclick="full('${p.point}')">full-res</button>` : ""}
+      <button onclick="relabel('${p.point}', '${esc(p.label)}')">relabel</button>
+      <button onclick="discard('${p.point}')">discard</button></div>` : ""}
+  </div>`;
+}
+
+function disputeCard(d) {
+  const side = (x, key) => `<div class="${d.winner === x.point ? "win" : ""}"><b>${esc(x.node)}</b> <span class="current">${esc(x.ref || "")} · ${esc(x.kind || "")}</span>
+    <div style="margin-top:4px">${esc(x.text)}</div>
+    ${d.status !== "resolved" ? `<button style="margin-top:6px" onclick="resolve(${d.id}, '${key}')">${esc(x.node)} is right</button>` : (d.winner === x.point ? `<div class="badge full" style="display:inline-block;margin-top:6px">upheld</div>` : `<div class="badge rev" style="display:inline-block;margin-top:6px">superseded</div>`)}</div>`;
+  return `<div class="dispute ${d.status === "resolved" ? "resolved" : ""}">
+    <div><b>Site ${esc(d.site.slice(0, 8))}</b> <span class="current">contradiction p=${d.p.toFixed(2)} (Jev) · ${esc(d.status)} · ${ago(d.ts)}</span></div>
+    <div class="evid">${d.evidence.map(e => `<img src="/img/${esc(e.full || e.thumb)}" title="${esc(e.node)}: ${esc(e.caption || e.label)}">`).join("") || '<div class="pending">no picture yet</div>'}</div>
+    <div class="vs">${side(d.a, "a")}${side(d.b, "b")}</div></div>`;
+}
+
+async function full(point) { const r = await api("/api/request_full", { point }); if (!r.ok) alert("Not requested: " + r.reason); refresh(); }
+async function reqEvidence(point) { await api("/api/request_evidence", { point }); refresh(); }
+async function resolve(id, winner) { await api(`/api/disputes/${id}/resolve`, { winner }); refresh(); }
+async function relabel(point, current) { const label = prompt("New label (supersedes the robot's label on every sighting of this site):", current); if (label) { await api("/api/relabel", { point, label }); refresh(); } }
+async function discard(point) { if (confirm("Discard? The robot gets a tombstone and frees the memory.")) { await api("/api/discard", { point }); refresh(); } }
+
+$("intentForm").onsubmit = async (e) => { e.preventDefault(); const text = $("intentInput").value.trim(); if (!text) return; await api("/api/intent", { text }); $("intentInput").value = ""; refresh(); };
+$("forge").onclick = async () => { const node = $("forgeNode").value; if (!node) return; const r = await api("/api/redteam/forge", { node }); alert(`Forged 'discard ${r.item.slice(0, 8)}' queued for ${node}. Watch the robot refuse it at its next window.`); refresh(); };
+$("askForm").onsubmit = async (e) => { e.preventDefault(); const question = $("askQ").value.trim(); const node = $("askNode").value; if (!question || !node) return; await api("/api/ask", { node, question }); $("askQ").value = ""; refresh(); };
+$("searchForm").onsubmit = async (e) => {
+  e.preventDefault();
+  const q = $("q").value.trim();
+  if (!q) { $("results").innerHTML = ""; return; }
+  const r = await fetch(`/api/search?q=${encodeURIComponent(q)}`).then(r => r.json());
+  $("results").innerHTML = `<div class="current" style="margin-bottom:6px">${r.results.length + r.conclusions.length} results in ${r.ms} ms · <a href="#" onclick="$('results').innerHTML='';return false" style="color:var(--gate)">clear</a></div>
+    <div class="list" style="max-height:none">${r.conclusions.map(p => textCard(p, false)).join("")}</div>
+    <div class="grid" style="margin-top:8px;max-height:30vh">${r.results.map(p => card(p)).join("")}</div><hr style="border-color:var(--line)">`;
+};
+
+async function refresh() {
+  const [m, gate, nodes, events] = await Promise.all([api("/api/metrics"), api("/api/feed?limit=400"), api("/api/nodes"), api("/api/events")]);
+  gateByItem = {};
+  gate.filter(p => p.kind === "observation").forEach(p => gateByItem[p.item] = p);
+  const concl = gate.filter(p => p.kind && p.kind !== "observation");
+  $("intentNow").textContent = m.intent;
+  $("nConcl").textContent = m.conclusions;
+  $("nPics").textContent = m.pictures;
+  $("nDisp").textContent = m.open_disputes;
+  $("bytes").textContent = `${kb(m.downlink_bytes)} / ${kb(m.uplink_bytes)}`;
+  const opts = nodes.map(n => `<option>${esc(n.node)}</option>`).join("");
+  for (const id of ["askNode", "forgeNode"]) { const v = $(id).value; $(id).innerHTML = opts; if (v) $(id).value = v; }
+  $("nodes").innerHTML = nodes.map(n => {
+    const live = n.ago_s < 90;
+    return `<div class="n"><span class="dot" style="background:${live ? "var(--good)" : "var(--bad)"}"></span><b>${esc(n.node)}</b>
+      <div class="current">last contact ${n.ago_s}s ago · window ${n.status.window ?? "–"} · ${n.status.memories ?? "–"} memories</div></div>`;
+  }).join("") || '<div class="empty">No robot has made contact yet</div>';
+  $("events").innerHTML = events.map(e => `<div class="${e.kind === "security" ? "security" : ""}"><span class="k">${new Date(e.ts * 1000).toLocaleTimeString()} ${esc(e.kind)}</span> ${esc(e.text)}</div>`).join("");
+  if (tab === "concl") {
+    const d = await api("/api/disputes");
+    $("disputes").innerHTML = d.map(disputeCard).join("") || '<div class="empty">No disagreements between robots yet</div>';
+    $("concl").innerHTML = concl.filter(p => p.kind !== "decision").map(p => textCard(p)).join("") || '<div class="empty">No conclusions yet. They arrive before the pictures.</div>';
+  } else if (tab === "pics") {
+    const pics = gate.filter(p => p.kind === "observation");
+    $("gN").textContent = `${pics.length} pictures`;
+    $("gateGrid").innerHTML = pics.map(p => card(p)).join("") || '<div class="empty">Waiting for the first comms window…</div>';
+  } else {
+    const qs = await api("/api/questions");
+    $("questions").innerHTML = qs.map(q => `<div class="qa"><div class="q">${esc(q.node)} · ${esc(q.question)}</div>
+      <div class="a">${q.answer ? esc(q.answer) : '<span class="current">waiting: goes up at the next window, answer comes down in the one after…</span>'}</div>
+      ${q.answer ? `<div class="current" style="margin-top:4px">answered offline by the robot's brain · round trip ${q.latency_s}s</div>${evidence(q.cited)}` : ""}</div>`).join("") || '<div class="empty">No questions yet</div>';
+  }
+}
+refresh();
+setInterval(refresh, 2500);
+</script>
+</body>
+</html>

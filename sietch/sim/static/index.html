@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SIETCH Mars</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><circle cx='8' cy='8' r='7' fill='%23c1440e'/></svg>">
+<style>
+  :root {
+    --bg: rgba(14, 10, 9, .78); --line: rgba(255, 220, 190, .14); --text: #f3e7dc; --muted: #b59d8a;
+    --gate: #f2a33a; --good: #3fbf7f; --bad: #e0565b; --brain: #5cc8e6; --held: #6f9cf0; --scout: #c79bf2;
+    --mono: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #1a0f0a; color: var(--text);
+    font: 13px/1.4 "Segoe UI", system-ui, sans-serif; }
+  #view { position: fixed; inset: 0; }
+  .panel { background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px;
+    backdrop-filter: blur(6px); }
+  .panel h3 { margin: 0 0 6px; font-size: 11px; letter-spacing: .14em; color: var(--muted); font-weight: 600;
+    display: flex; justify-content: space-between; gap: 8px; }
+  .muted { color: var(--muted); }
+  b.g { color: var(--gate); } b.b { color: var(--brain); } b.s { color: var(--scout); }
+
+  /* top bar */
+  #top { position: fixed; top: 10px; left: 10px; right: 10px; display: flex; gap: 10px; align-items: stretch; pointer-events: none; }
+  #top > div { pointer-events: auto; }
+  #brand { font-weight: 800; letter-spacing: .2em; font-size: 15px; display: flex; flex-direction: column; justify-content: center; }
+  #brand span { color: var(--gate); }
+  #brand small { font-weight: 400; letter-spacing: .04em; font-size: 11px; color: var(--muted); }
+  #mission { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+  #mission .v { font-size: 15px; font-weight: 600; color: var(--gate); }
+  #link { min-width: 250px; display: flex; flex-direction: column; justify-content: center; }
+  #link .v { font-size: 15px; font-weight: 700; }
+  #link.up .v { color: var(--good); } #link.down .v { color: var(--bad); }
+  #earth { display: flex; flex-direction: column; justify-content: center; text-align: right; }
+
+  /* left: camera feeds + recall */
+  #left { position: fixed; left: 10px; bottom: 10px; width: 300px; display: flex; flex-direction: column; gap: 8px; }
+  .feed { padding: 8px; }
+  .feed .frame { width: 100%; aspect-ratio: 4 / 3; background: #000 center / cover no-repeat; border-radius: 6px;
+    position: relative; overflow: hidden; }
+  .feed .frame .cam { position: absolute; left: 6px; top: 6px; font: 600 10px var(--mono); background: rgba(0,0,0,.55);
+    padding: 2px 6px; border-radius: 4px; letter-spacing: .08em; }
+  .feed .frame .rec { position: absolute; right: 6px; top: 6px; width: 8px; height: 8px; border-radius: 50%; background: var(--bad); opacity: 0; }
+  .feed .frame.flash .rec { opacity: 1; }
+  .feed .tags { font-size: 11px; margin-top: 5px; min-height: 16px; }
+  .row { display: flex; gap: 6px; }
+  input { flex: 1; min-width: 0; background: rgba(0,0,0,.35); border: 1px solid var(--line); color: var(--text);
+    border-radius: 6px; padding: 6px 8px; font: inherit; }
+  button { background: rgba(255,255,255,.08); border: 1px solid var(--line); color: var(--text); border-radius: 6px;
+    padding: 5px 9px; font: inherit; cursor: pointer; white-space: nowrap; }
+  button:hover { background: rgba(255,255,255,.16); }
+  button.primary { background: var(--gate); color: #1a0f0a; border-color: var(--gate); font-weight: 600; }
+  button.danger { border-color: var(--bad); color: #ffb3b5; }
+
+  /* right: brain, queue, mission control */
+  #right { position: fixed; right: 10px; top: 86px; bottom: 10px; width: 380px; display: flex; flex-direction: column; gap: 8px; }
+  #brain .state { font-size: 12px; min-height: 18px; }
+  #trace { font: 11.5px/1.45 var(--mono); max-height: 150px; overflow: hidden; margin-top: 4px; }
+  #trace div { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #trace .st { color: var(--brain); }
+  #queue .q { display: grid; grid-template-columns: 18px 1fr 70px; gap: 6px; align-items: center; font-size: 12px; margin: 2px 0; }
+  #queue .bar { height: 6px; background: var(--gate); border-radius: 3px; }
+  #queue .q.text .bar { background: var(--brain); }
+  #mc { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+  #mcList { flex: 1; min-height: 0; overflow: auto; display: flex; flex-direction: column; gap: 6px; margin: 6px 0; }
+  .concl { border-left: 3px solid var(--brain); padding: 4px 8px; background: rgba(92,200,230,.07); border-radius: 4px; font-size: 12px; }
+  .concl.scout { border-color: var(--scout); background: rgba(199,155,242,.07); }
+  .concl.sup { opacity: .55; text-decoration: line-through; }
+  .concl .k { font: 600 10px var(--mono); color: var(--muted); letter-spacing: .05em; }
+  .dispute { border: 1px solid var(--bad); border-radius: 6px; padding: 6px 8px; background: rgba(224,86,91,.1); font-size: 12px; }
+  .dispute .vs { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 4px; }
+  .answer { border: 1px solid var(--brain); border-radius: 6px; padding: 6px 8px; font-size: 12px; background: rgba(92,200,230,.08); }
+
+  /* bottom: storage + captions */
+  #mem { position: fixed; left: 320px; bottom: 10px; width: 330px; }
+  .tier { display: flex; height: 8px; border-radius: 4px; overflow: hidden; margin: 4px 0 6px; background: rgba(255,255,255,.08); }
+  .tier i { display: block; height: 100%; }
+  #caption { position: fixed; left: 50%; bottom: 150px; transform: translateX(-50%); max-width: 760px; text-align: center;
+    pointer-events: none; transition: opacity .6s; opacity: 0; background: rgba(14, 9, 8, .72);
+    border: 1px solid rgba(255, 220, 190, .16); border-radius: 12px; padding: 10px 22px 12px; backdrop-filter: blur(4px); }
+  #caption .ch { font: 700 11px var(--mono); letter-spacing: .2em; color: var(--gate); }
+  #caption .t { font-size: 22px; font-weight: 700; text-shadow: 0 2px 12px #000, 0 0 2px #000; margin-top: 2px; }
+  #caption .s { font-size: 14px; color: #ffe9d6; text-shadow: 0 1px 8px #000, 0 0 2px #000; margin-top: 4px; }
+  #ff { position: fixed; left: 50%; top: 84px; transform: translateX(-50%); font: 700 13px var(--mono); color: #1a0f0a;
+    background: var(--gate); padding: 3px 10px; border-radius: 12px; display: none; }
+  #toolbar { position: fixed; left: 50%; top: 84px; transform: translateX(-50%); display: flex; gap: 6px; }
+  #toolbar.hidden { display: none; }
+  #endcard { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; flex-direction: column;
+    background: radial-gradient(ellipse at center, rgba(10,8,12,.55), rgba(10,8,12,.9)); text-align: center; gap: 14px; }
+  #endcard h1 { margin: 0; letter-spacing: .3em; font-size: 44px; } #endcard h1 span { color: var(--gate); }
+
+  /* 3D labels */
+  .lbl { font: 600 11px var(--mono); padding: 2px 6px; border-radius: 4px; background: rgba(0,0,0,.6); color: var(--text);
+    white-space: nowrap; pointer-events: none; }
+  .lbl.rank { background: var(--gate); color: #1a0f0a; }
+  .bubble { max-width: 300px; white-space: normal; font: 12px/1.35 "Segoe UI", sans-serif; background: rgba(8,24,30,.85);
+    border: 1px solid var(--brain); color: #dff6fd; padding: 6px 9px; border-radius: 10px; pointer-events: none; }
+  .bubble.scout { border-color: var(--scout); background: rgba(24,12,30,.85); color: #f1e3ff; }
+  .bubble b { color: var(--brain); } .bubble.scout b { color: var(--scout); }
+  .shield { font: 700 13px var(--mono); padding: 4px 10px; border-radius: 6px; background: var(--bad); color: #fff; pointer-events: none; }
+</style>
+<script type="importmap">
+{ "imports": { "three": "./vendor/three.module.min.js", "three/addons/": "./vendor/addons/" } }
+</script>
+</head>
+<body>
+<div id="view"></div>
+
+<div id="top">
+  <div class="panel" id="brand">SIETCH <span>MARS</span><small>Qdrant Edge memory for robot brains</small></div>
+  <div class="panel" id="mission"><div class="muted" style="font-size:11px;letter-spacing:.12em">JEZERO CRATER · <span id="sol">SOL 142</span> · MISSION</div><div class="v" id="intent">…</div></div>
+  <div class="panel" id="link"><div class="muted" style="font-size:11px;letter-spacing:.12em">RELAY LINK</div><div class="v" id="linkState">…</div><div class="muted" id="linkSub" style="font-size:11px"></div></div>
+  <div class="panel" id="earth"><div class="muted" style="font-size:11px;letter-spacing:.12em">EARTH</div><div><b>12.5</b> light-minutes</div><div class="muted" style="font-size:11px">no joystick possible</div></div>
+</div>
+
+<div id="toolbar" class="hidden">
+  <button id="bPass">Orbiter pass now</button><button id="bBlackout">Blackout</button>
+  <button id="bCapture">Rover capture (C)</button><button id="bForge" class="danger">Forge a command</button><button id="bDemo" class="primary">Play demo</button>
+</div>
+<div id="ff">⏩ time-lapse</div>
+
+<div id="left">
+  <div class="panel feed"><div class="frame" id="feedRover"><span class="cam" id="camRover">ROVER · NAVCAM</span><span class="rec"></span></div><div class="tags" id="tagsRover"></div></div>
+  <div class="panel feed"><div class="frame" id="feedScout"><span class="cam" id="camScout">SCOUT · AERIAL</span><span class="rec"></span></div><div class="tags" id="tagsScout"></div></div>
+  <div class="panel">
+    <h3><span>RECALL · QDRANT EDGE ON THE ROVER</span><span id="recallMs"></span></h3>
+    <form class="row" id="recallForm"><input id="recallQ" placeholder="where did I see mud cracks?"><button>Recall</button></form>
+  </div>
+</div>
+
+<div class="panel" id="mem">
+  <h3><span>MEMORY ON BOARD</span><span id="memBytes"></span></h3>
+  <div id="memRover"></div>
+  <div id="memScout" style="margin-top:4px"></div>
+</div>
+
+<div id="right">
+  <div class="panel" id="brain">
+    <h3><span>ROVER BRAIN · <span id="brainModel">local LLM</span></span><span id="brainQ"></span></h3>
+    <div class="state" id="brainState"></div>
+    <div id="trace"></div>
+  </div>
+  <div class="panel" id="queue">
+    <h3><span>DOWNLINK QUEUE · FORMULA GATE</span><span class="muted">value / KB</span></h3>
+    <div id="queueRows"></div>
+  </div>
+  <div class="panel" id="mc">
+    <h3><span>MISSION CONTROL · EARTH (QDRANT SERVER)</span><span id="mcStats"></span></h3>
+    <form class="row" id="retaskForm"><input id="retaskQ" placeholder="retask the fleet in one sentence"><button class="primary">Retask</button></form>
+    <div id="mcList"></div>
+    <form class="row" id="askForm"><input id="askQ" placeholder="ask the rover (offline, from its memory)"><button>Ask</button></form>
+  </div>
+</div>
+
+<div id="caption"><div class="ch" id="capCh"></div><div class="t" id="capT"></div><div class="s" id="capS"></div></div>
+<div id="endcard"><h1>SIETCH <span>·</span> MARS</h1>
+  <div style="font-size:18px">Qdrant Edge memory for robot brains that lose signal</div>
+  <div class="muted" id="endCredits" style="max-width:760px;font-size:12px"></div></div>
+
+<div id="errors" style="position:fixed;left:10px;top:90px;max-width:40vw;font:12px monospace;color:#fff;background:#8a1c1c;padding:6px;display:none;z-index:9"></div>
+<script>
+  // surface script errors on the page itself (headless screenshots, rehearsals)
+  const showErr = (m) => { const e = document.getElementById("errors"); e.style.display = "block"; e.textContent += m + "\n"; };
+  addEventListener("error", (e) => showErr(`${e.message} @ ${(e.filename || "").split("/").pop()}:${e.lineno}`));
+  addEventListener("unhandledrejection", (e) => showErr(`promise: ${e.reason && (e.reason.stack || e.reason.message || e.reason)}`));
+</script>
+<script type="module" src="./js/main.js"></script>
+</body>
+</html>

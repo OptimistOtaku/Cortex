@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SIETCH Robot</title>
+<style>
+  :root { --bg: #0b0e13; --panel: #121821; --panel2: #18202b; --line: #243040; --text: #e6edf5; --muted: #8a9bb0;
+          --gate: #f2a33a; --good: #3fbf7f; --bad: #e0565b; --priv: #b78cf2; --brain: #5cc8e6; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  header { display: flex; gap: 12px; align-items: center; padding: 12px 18px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+  h1 { font-size: 17px; margin: 0; letter-spacing: .12em; } h1 span { color: var(--gate); }
+  .pill { padding: 4px 10px; border-radius: 99px; font-weight: 600; font-size: 12px; letter-spacing: .06em; }
+  .pill.on { background: rgba(63,191,127,.15); color: var(--good); } .pill.off { background: rgba(224,86,91,.15); color: var(--bad); }
+  .pill.open { background: rgba(242,163,58,.2); color: var(--gate); } .pill.brain { background: rgba(92,200,230,.15); color: var(--brain); }
+  .pill.think { background: rgba(92,200,230,.35); color: #e6f8ff; animation: pulse 1.2s infinite; }
+  @keyframes pulse { 50% { opacity: .55; } }
+  .muted { color: var(--muted); } .intent b { color: var(--gate); }
+  button { background: var(--panel2); color: var(--text); border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; cursor: pointer; font: inherit; }
+  button.primary { background: var(--gate); color: #1a1205; border-color: var(--gate); font-weight: 600; }
+  button.brainbtn { color: var(--brain); border-color: rgba(92,200,230,.5); }
+  button.small { padding: 3px 8px; font-size: 12px; }
+  main { display: grid; grid-template-columns: 330px 1fr 350px; gap: 12px; padding: 12px 18px; }
+  @media (max-width: 1150px) { main { grid-template-columns: 1fr; } }
+  section { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px; min-width: 0; }
+  section + section { margin-top: 12px; }
+  h2 { margin: 0 0 10px; font-size: 13px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); display: flex; justify-content: space-between; }
+  video { width: 100%; border-radius: 10px; background: #000; aspect-ratio: 4/3; object-fit: cover; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; align-items: center; }
+  input[type=text] { width: 100%; background: var(--panel2); border: 1px solid var(--line); color: var(--text); padding: 8px 10px; border-radius: 8px; font: inherit; }
+  .banner { margin: 10px 18px 0; padding: 10px 14px; border-radius: 10px; background: rgba(92,200,230,.12); border: 1px solid var(--brain); display: flex; gap: 12px; align-items: center; }
+  .queue { display: flex; flex-direction: column; gap: 8px; max-height: 44vh; overflow: auto; }
+  .item { display: grid; grid-template-columns: 88px 1fr; gap: 10px; background: var(--panel2); border: 1px solid var(--line); border-radius: 10px; padding: 8px; }
+  .item img, .item .ph { width: 88px; height: 66px; object-fit: cover; border-radius: 6px; }
+  .item .ph { display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; letter-spacing: .08em; color: var(--brain); background: rgba(92,200,230,.08); border: 1px dashed rgba(92,200,230,.4); }
+  .bar { height: 5px; background: var(--line); border-radius: 3px; overflow: hidden; margin: 4px 0; }
+  .bar > div { height: 100%; background: var(--gate); }
+  .badge { font-size: 10px; padding: 1px 6px; border-radius: 99px; border: 1px solid var(--line); color: var(--muted); margin-right: 3px; }
+  .badge.priv { color: var(--priv); border-color: var(--priv); } .badge.sent { color: var(--good); border-color: var(--good); }
+  .badge.rev { color: var(--gate); border-color: var(--gate); } .badge.brain { color: var(--brain); border-color: var(--brain); }
+  .rank { font-weight: 700; color: var(--gate); margin-right: 6px; }
+  .brainstate { font-size: 13px; }
+  .trace { font: 12px/1.45 ui-monospace, Consolas, monospace; color: var(--muted); max-height: 22vh; overflow: auto; margin-top: 8px; }
+  .trace div { border-left: 2px solid var(--brain); padding: 2px 8px; margin-bottom: 4px; }
+  .trace b { color: var(--brain); }
+  .thought { background: var(--panel2); border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; font-size: 13px; }
+  .thought .k { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--brain); }
+  .thought.decision .k { color: var(--muted); } .thought.note .k { color: var(--good); } .thought.superseded { opacity: .5; text-decoration: line-through; }
+  .evid { display: flex; gap: 4px; margin-top: 6px; flex-wrap: wrap; }
+  .evid img { width: 56px; height: 42px; object-fit: cover; border-radius: 4px; }
+  .answer { background: var(--panel2); border: 1px solid var(--brain); border-radius: 10px; padding: 10px; margin-top: 8px; font-size: 13px; }
+  .results { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 8px; }
+  .results img { width: 100%; aspect-ratio: 4/3; object-fit: cover; border-radius: 6px; }
+  .log { font: 12px/1.45 ui-monospace, Consolas, monospace; color: var(--muted); max-height: 26vh; overflow: auto; }
+  .log div { border-bottom: 1px solid var(--line); padding: 3px 0; } .log .k { color: var(--gate); } .log .security { color: var(--bad); }
+  .win { font-size: 12px; } .win b { color: var(--text); }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<header>
+  <h1>SIETCH <span id="nodeName">ROBOT</span></h1>
+  <span class="pill" id="link">…</span>
+  <span class="pill" id="phase">…</span>
+  <span class="pill brain" id="brainPill">…</span>
+  <span class="muted" id="countdown"></span>
+  <span class="intent muted">Mission: <b id="intent">…</b></span>
+  <span style="flex:1"></span>
+  <button id="airplane">Airplane mode</button>
+  <button id="windowNow">Open window now</button>
+</header>
+<div class="banner" id="banner" hidden><span>🧠</span><span id="bannerText"></span><span style="flex:1"></span><button class="primary" id="bannerSnap">Capture another angle</button><button id="bannerDismiss">Dismiss</button></div>
+<main>
+  <div>
+    <section>
+      <h2>Camera</h2>
+      <video id="video" autoplay playsinline muted></video>
+      <div class="row">
+        <button class="primary" id="snap">Capture (space)</button>
+        <label class="muted"><input type="checkbox" id="auto"> auto every 5 s</label>
+        <label><button onclick="document.getElementById('file').click()">Upload</button><input type="file" id="file" accept="image/*" multiple hidden></label>
+      </div>
+      <div class="muted" id="lastCapture" style="margin-top:8px;font-size:12px"></div>
+    </section>
+    <section>
+      <h2>Ask the brain (offline)</h2>
+      <form id="askForm"><input type="text" id="ask" placeholder="What have you seen that suggests past water?"></form>
+      <div id="answer"></div>
+    </section>
+    <section>
+      <h2>Recall (Qdrant Edge, no LLM)</h2>
+      <form id="searchForm"><input type="text" id="q" placeholder="where did I see a red bottle?"></form>
+      <div class="muted" id="searchMeta" style="font-size:12px;margin-top:6px"></div>
+      <div class="results" id="results"></div>
+    </section>
+    <section>
+      <h2>Operator note</h2>
+      <form id="noteForm"><input type="text" id="note" placeholder="Your own observation; syncs like the brain's"></form>
+    </section>
+  </div>
+  <div>
+    <section>
+      <h2><span>Brain</span><span id="brainModel" style="text-transform:none;letter-spacing:0"></span></h2>
+      <div class="brainstate" id="brainState"></div>
+      <div class="trace" id="trace"></div>
+    </section>
+    <section>
+      <h2>What the brain concluded</h2>
+      <div class="queue" id="thoughts" style="max-height:30vh"></div>
+    </section>
+    <section>
+      <h2>Downlink queue · sync gate (value per KB) · conclusions travel first</h2>
+      <div class="queue" id="queue"></div>
+      <h2 style="margin-top:14px">Held back · 0 bytes spent</h2>
+      <div class="queue" id="held" style="max-height:16vh"></div>
+    </section>
+  </div>
+  <div>
+    <section>
+      <h2>Last comms window</h2>
+      <div class="win" id="lastWindow"><span class="muted">No window yet.</span></div>
+    </section>
+    <section>
+      <h2>Memory</h2>
+      <div class="win" id="stats"></div>
+    </section>
+    <section>
+      <h2>Activity</h2>
+      <div class="log" id="events"></div>
+    </section>
+  </div>
+</main>
+<script>
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const post = (path, body) => fetch(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body || {}) }).then(r => r.json());
+const img = (id) => `<img src="/img/${id}/best" loading="lazy" alt="" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'ph',textContent:'EMBEDDING ONLY'}))">`;
+let linkUp = true, dismissed = null;
+
+// ---------------- camera
+async function startCamera() {
+  try { $("video").srcObject = await navigator.mediaDevices.getUserMedia({ video: { width: 1280, height: 960 }, audio: false }); }
+  catch (e) { $("lastCapture").textContent = "No camera available (" + e.name + "). Use Upload."; }
+}
+async function snap() {
+  const v = $("video");
+  if (!v.videoWidth) return;
+  const c = document.createElement("canvas"); c.width = v.videoWidth; c.height = v.videoHeight;
+  c.getContext("2d").drawImage(v, 0, 0);
+  await sendImage(await new Promise(r => c.toBlob(r, "image/jpeg", 0.9)), "camera");
+}
+async function sendImage(blob, source) {
+  $("lastCapture").textContent = "Embedding on-device…";
+  const r = await fetch("/api/capture", { method: "POST", body: blob, headers: { "Content-Type": "image/jpeg", "X-Source": source } }).then(r => r.json());
+  $("lastCapture").innerHTML = `${esc(r.ref)} stored in ${r.ms} ms · tags: <b>${r.tags.join(", ")}</b> · novelty ${r.novelty.toFixed(2)}` +
+
+    (r.brain_woken ? ` · <span style="color:var(--brain)">reflex woke the brain</span>` : "");
+  refresh();
+}
+$("snap").onclick = snap;
+$("bannerSnap").onclick = snap;
+$("bannerDismiss").onclick = () => { dismissed = $("bannerText").dataset.ts; $("banner").hidden = true; };
+document.addEventListener("keydown", (e) => { if (e.code === "Space" && e.target.tagName !== "INPUT") { e.preventDefault(); snap(); } });
+let autoTimer = null;
+$("auto").onchange = (e) => { clearInterval(autoTimer); if (e.target.checked) autoTimer = setInterval(snap, 5000); };
+$("file").onchange = async (e) => { for (const f of e.target.files) await sendImage(f, "upload"); e.target.value = ""; };
+
+// ---------------- controls
+$("airplane").onclick = async () => { await post("/api/link", { up: !linkUp }); refresh(); };
+$("windowNow").onclick = async () => { await post("/api/window_now"); setTimeout(refresh, 800); };
+$("searchForm").onsubmit = async (e) => {
+  e.preventDefault();
+  const q = $("q").value.trim(); if (!q) return;
+  const r = await fetch(`/api/search?q=${encodeURIComponent(q)}`).then(r => r.json());
+  $("searchMeta").textContent = `${r.results.length} results in ${r.ms} ms (embed ${r.embed_ms} ms + Qdrant Edge ${r.qdrant_ms} ms)` + (linkUp ? "" : " · link is down");
+  $("results").innerHTML = r.results.slice(0, 6).map(x => `<div title="${esc(x.caption)}">${img(x.id)}<div style="font-size:11px">${esc(x.ref)} ${esc(x.label)}</div></div>`).join("");
+};
+$("askForm").onsubmit = async (e) => {
+  e.preventDefault();
+  const question = $("ask").value.trim(); if (!question) return;
+  const r = await post("/api/ask", { question });
+  $("answer").innerHTML = `<div class="answer"><b>${esc(question)}</b><div class="muted">${r.queued ? "queued for the brain…" : esc(r.reason)}</div></div>`;
+  $("ask").value = "";
+};
+$("noteForm").onsubmit = async (e) => {
+  e.preventDefault();
+  const text = $("note").value.trim(); if (!text) return;
+  await post("/api/note", { text }); $("note").value = ""; refresh();
+};
+async function examine(id) { await post(`/api/examine/${id}`); refresh(); }
+
+// ---------------- state
+function queueRow(x, i) {
+  const rel = Math.max(0, Math.min(1, x.relevance ?? 0));
+  const text = x.kind && x.kind !== "observation";
+  const pic = text ? `<div class="ph">${esc(x.kind.toUpperCase())}</div>` : img(x.id);
+  const title = text ? esc((x.text || "").slice(0, 110)) : `<b>${esc(x.label)}</b> <span class="muted">${(x.tags || []).map(esc).join(" · ")}</span>`;
+  return `<div class="item">${pic}<div>
+      <div><span class="rank">#${i + 1}</span>${title}</div>
+      <div class="bar" title="relevance to mission"><div style="width:${(rel * 100).toFixed(0)}%"></div></div>
+      <div class="muted" style="font-size:12px">${x.demand ? "demand first · " : ""}value/KB <b style="color:var(--text)">${x.value_per_kb ?? "–"}</b> · relevance ${rel.toFixed(2)} · importance ${(x.importance ?? 0).toFixed(2)} · ${((x.bytes_next || 0) / 1000).toFixed(1)} KB</div>
+      <div>${x.demand ? `<span class="badge rev">ground wants full-res · ${Math.round(100 * (x.full_sent || 0) / (x.full_size || 1))}% sent</span>` : ""}${x.importance >= 0.8 && !text ? `<span class="badge brain">brain flagged</span>` : ""}
+      ${!text && !x.examined ? `<button class="small brainbtn" onclick="examine('${x.id}')">examine with brain</button>` : ""}</div>
+    </div></div>`;
+}
+function thought(t) {
+  const title = t.kind === "decision" ? `decision · ${esc(t.action || "")}` : t.kind === "note" ? "operator note" : t.kind;
+  return `<div class="thought ${esc(t.kind)}${t.superseded ? " superseded" : ""}">
+    <div class="k">${title} · ${esc(t.ref)} <span class="muted" style="font-weight:400">${new Date(t.captured_at).toLocaleTimeString()} · importance ${(t.importance ?? 0).toFixed(2)} · ${esc(t.state === "sent" ? "sent to ground" : "waiting for a window")}</span></div>
+    <div>${esc(t.kind === "decision" ? t.reason : t.text)}</div>
+    ${t.superseded ? `<div class="badge rev" style="display:inline-block;margin-top:4px">superseded by ${esc(t.superseded_by?.by || "mission control")}: ${esc((t.superseded_by?.text || "").slice(0, 80))}</div>` : ""}
+    <div class="evid">${(t.evidence || []).map(img).join("")}</div></div>`;
+}
+function traceLine(s) {
+  const d = s.detail;
+  const body = typeof d === "string" ? esc(d) :
+    s.step === "recall" ? `query <i>${esc(d.query)}</i> → ${d.found.length} memories<br>${d.found.slice(0, 4).map(esc).join("<br>")}` :
+    s.step === "remember" ? `${esc(d.ref)} (importance ${d.importance}): ${esc(d.text)}` :
+    s.step === "act" ? `<b>${esc(d.action)}</b>: ${esc(d.reason)}` : esc(JSON.stringify(d));
+  return `<div><b>${s.t}s ${esc(s.step)}</b> ${body}</div>`;
+}
+async function refresh() {
+  const [s, m, b] = await Promise.all([fetch("/api/status").then(r => r.json()), fetch("/api/memory").then(r => r.json()), fetch("/api/brain").then(r => r.json())]);
+  linkUp = s.comms.link_up;
+  $("nodeName").textContent = s.node.toUpperCase();
+  $("link").className = "pill " + (linkUp ? "on" : "off"); $("link").textContent = linkUp ? "LINK AVAILABLE" : "AIRPLANE MODE";
+  $("airplane").textContent = linkUp ? "Airplane mode" : "Restore link";
+  $("phase").className = "pill " + (s.comms.phase === "open" ? "open" : "on"); $("phase").textContent = s.comms.phase === "open" ? "WINDOW OPEN" : "NO CONTACT";
+  $("countdown").textContent = s.comms.phase === "open" ? "" : `next window in ${s.comms.next_open_in_s}s`;
+  $("intent").textContent = s.intent;
+  const thinking = b.status === "thinking";
+  $("brainPill").className = "pill " + (thinking ? "think" : "brain"); $("brainPill").textContent = thinking ? "BRAIN THINKING" : ("BRAIN " + b.status.toUpperCase());
+  $("brainModel").textContent = b.model ? `${b.model} · local, offline` : "reflex-only (no local LLM)";
+  const task = b.task;
+  $("brainState").innerHTML = task ? `<b style="color:var(--brain)">${esc(task.kind)}</b> ${esc(task.ref || "")} <span class="muted">${esc(task.why || task.question || "")}</span>${b.queued ? ` · ${b.queued} queued` : ""}`
+    : `<span class="muted">${b.model ? "Idle. The reflex wakes the brain for relevant, novel frames." : "No local LLM on this robot: the reflex (Qdrant Formula) still decides what to send."}${b.last_error ? " Last error: " + esc(b.last_error) : ""}</span>`;
+  $("trace").innerHTML = (b.trace || []).map(traceLine).join("") + (b.partial ? `<div><b>answer</b> ${esc(b.partial)}▌</div>` : "");
+  if (b.answers && b.answers.length) {
+    const a = b.answers[0];
+    $("answer").innerHTML = `<div class="answer"><b>${esc(a.question)}</b><div style="margin-top:6px">${esc(a.answer)}</div>
+      <div class="evid">${a.cited.map(c => img(c.id)).join("")}</div><div class="muted" style="font-size:11px;margin-top:4px">${a.source === "ground" ? "asked by mission control · answer goes down next window" : "answered offline from local memory"}</div></div>`;
+  }
+  $("thoughts").innerHTML = [...b.insights, ...b.notes, ...b.decisions].sort((x, y) => (y.hlc > x.hlc ? 1 : -1)).slice(0, 14).map(thought).join("") || '<div class="muted">Nothing yet. Capture something relevant to the mission, or press "examine with brain".</div>';
+  if (b.prompt && String(b.prompt.ts) !== dismissed && Date.now() / 1000 - b.prompt.ts < 300) {
+    $("banner").hidden = false; $("bannerText").textContent = b.prompt.text; $("bannerText").dataset.ts = String(b.prompt.ts);
+  }
+  $("queue").innerHTML = m.queue.map(queueRow).join("") || '<div class="muted">Nothing waiting to send.</div>';
+  $("held").innerHTML = m.held.map(x => `<div class="item">${img(x.id)}<div><b>${esc(x.label)}</b> <span class="muted">${(x.tags || []).map(esc).join(" · ")}</span><div class="muted" style="font-size:12px">${esc(x.held_reason)}</div></div></div>`).join("") || '<div class="muted">Nothing held back yet.</div>';
+  const L = s.comms.last || {};
+  const sent = (L.items || []).map(i => (i.kind === "observation" ? (i.tags || [])[0] : `${i.kind} ${i.ref}`) + (i.rep === "chunk" ? " (full-res chunk)" : "")).join(", ");
+  $("lastWindow").innerHTML = L.window ? `Window <b>${L.window}</b> · budget <b>${L.budget} B</b> · uplink ${L.uplink_bytes} B
+    <div style="margin-top:6px">sent <b>${(L.items || []).length}</b> items, ${L.bytes} B · ${L.waiting} still waiting<br><span class="muted">${esc(sent) || "–"}</span>
+    ${(L.why_skipped || []).length ? `<br><span class="muted">held back: ${L.why_skipped.map(esc).join("; ")}</span>` : ""}</div>` : '<span class="muted">No window yet.</span>';
+  const bs = s.bytes_sent || {}, st = s.storage || {};
+  $("stats").innerHTML = `<b>${s.memories}</b> memories on this device · <b>${s.fleet_known}</b> known from the fleet<br>
+    storage <b>${st.storage_mb} / ${st.budget_mb} MB</b> · tiers ${Object.entries(st.tiers || {}).map(([k, v]) => `${k} ${v}`).join(", ")}<br>
+    sent to ground <b>${((bs.bytes || 0) / 1000).toFixed(1)} KB</b> (${bs.items || 0} items)`;
+  $("events").innerHTML = s.events.map(e => `<div class="${e.kind === "security" ? "security" : ""}"><span class="k">${new Date(e.ts * 1000).toLocaleTimeString()} ${esc(e.kind)}</span> ${esc(e.text)}</div>`).join("");
+}
+startCamera();
+refresh();
+setInterval(refresh, 1500);
+</script>
+</body>
+</html>

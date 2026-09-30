@@ -1,0 +1,162 @@
+{
+ "delta_scarp": {
+  "nasa_id": "PIA24683",
+  "camera": "mastcam",
+  "what": "Jezero delta scarp: layered sediments laid down by a river",
+  "title": "Mars' Delta Scarp From More Than a Mile Away",
+  "credit": "NASA/JPL-Caltech/LANL/CNES/CNRS/ASU/MSSS",
+  "date": "2021-06-22",
+  "w": 1280,
+  "h": 476
+ },
+ "kodiak": {
+  "nasa_id": "PIA24802",
+  "camera": "mastcam",
+  "what": "Kodiak butte: delta remnant with inclined layers",
+  "title": "Perseverance Captures Image of Kodiak",
+  "credit": "NASA/JPL-Caltech/ASU/MSSS",
+  "date": "2021-12-13",
+  "w": 960,
+  "h": 1280
+ },
+ "mud_cracks": {
+  "nasa_id": "PIA21262",
+  "camera": "mastcam",
+  "what": "Old Soaker: possible mud cracks, a lake bed that dried",
+  "title": "Mars Rover Mastcam View of Possible Mud Cracks",
+  "credit": "NASA/JPL-Caltech/MSSS",
+  "date": "2017-01-17",
+  "w": 1280,
+  "h": 425
+ },
+ "mud_cracks_close": {
+  "nasa_id": "PIA21261",
+  "camera": "mastcam",
+  "what": "Old Soaker close-up: polygonal cracks preserved in rock",
+  "title": "Possible Mud Cracks Preserved in Martian Rock",
+  "credit": "NASA/JPL-Caltech/MSSS",
+  "date": "2017-01-17",
+  "w": 1280,
+  "h": 894
+ },
+ "veins": {
+  "nasa_id": "PIA19161",
+  "camera": "mastcam",
+  "what": "Garden City: mineral veins where water flowed through fractures",
+  "title": "Prominent Veins at Garden City on Mount Sharp, Mars",
+  "credit": "NASA/JPL-Caltech/MSSS",
+  "date": "2015-04-01",
+  "w": 1280,
+  "h": 571
+ },
+ "streambed_pebbles": {
+  "nasa_id": "PIA16156",
+  "camera": "mastcam",
+  "what": "Hottah: rounded pebbles from an ancient streambed",
+  "title": "Remnants of Ancient Streambed on Mars",
+  "credit": "NASA/JPL-Caltech/MSSS",
+  "date": "2012-09-27",
+  "w": 936,
+  "h": 728
+ },
+ "spherules": {
+  "nasa_id": "PIA05587",
+  "camera": "mastcam",
+  "what": "Hematite 'berries': concretions grown in groundwater",
+  "title": "A Bowl of Hematite-Rich Berries",
+  "credit": "NASA/JPL/Cornell/University of Mainz",
+  "date": "2004-03-18",
+  "w": 720,
+  "h": 486
+ },
+ "leopard_spots": {
+  "nasa_id": "PIA26368",
+  "camera": "mastcam",
+  "what": "Cheyava Falls: 'leopard spot' rock, a potential biosignature",
+  "title": "Perseverance Finds a Rock With 'Leopard Spots'",
+  "credit": "NASA/JPL-Caltech/MSSS",
+  "date": "2024-07-25",
+  "w": 1280,
+  "h": 932
+ },
+ "meteorite": {
+  "nasa_id": "PIA21134",
+  "camera": "mastcam",
+  "what": "Egg Rock: an iron-nickel meteorite",
+  "title": "Curiosity Rover Finds and Examines a Meteorite on Mars",
+  "credit": "NASA/JPL-Caltech/MSSS",
+  "date": "2016-11-02",
+  "w": 1280,
+  "h": 1143
+ },
+ "dune": {
+  "nasa_id": "PIA20283",
+  "camera": "mastcam",
+  "what": "Namib dune: dark wind-blown sand",
+  "title": "Mastcam Telephoto of a Martian Dune Downwind Face",
+  "credit": "NASA/JPL-Caltech",
+  "date": "2016-01-04",
+  "w": 1133,
+  "h": 1280
+ },
+ "dust_devil": {
+  "nasa_id": "PIA25657",
+  "camera": "navcam",
+  "what": "A dust devil crossing the crater floor",
+  "title": "NASA's Perseverance Records a Martian Dust Devil",
+  "credit": "NASA/JPL-Caltech/LANL/CNES/CNRS/INTA-CSIC/Space Science Institute/ISAE-Supaero",
+  "date": "2022-12-13",
+  "w": 1280,
+  "h": 993
+ },
+ "sunset": {
+  "nasa_id": "PIA19400",
+  "camera": "mastcam",
+  "what": "Sunset in Gale crater: Mars sunsets are blue",
+  "title": "Sunset in Mars Gale Crater",
+  "credit": "NASA/JPL-Caltech/MSSS/Texas A&M Univ.",
+  "date": "2015-05-08",
+  "w": 1280,
+  "h": 1029
+ },
+ "aerial_ripples": {
+  "nasa_id": "PIA26242",
+  "camera": "aerial",
+  "what": "From the air: sand ripples",
+  "title": " Ingenuity's View of Sand Ripples During Flight 70",
+  "credit": "NASA/JPL-Caltech",
+  "date": "2024-01-25",
+  "w": 1280,
+  "h": 949
+ },
+ "aerial_first": {
+  "nasa_id": "PIA24593",
+  "camera": "aerial",
+  "what": "From the air: first aerial colour image of Mars",
+  "title": "First Aerial Color Image of Mars",
+  "credit": "NASA/JPL-Caltech",
+  "date": "2021-04-23",
+  "w": 1280,
+  "h": 949
+ },
+ "aerial_backshell": {
+  "nasa_id": "PIA25219",
+  "camera": "aerial",
+  "what": "From the air: the rover's discarded backshell",
+  "title": "Rover's Backshell Seen From the Air",
+  "credit": "NASA/JPL-Caltech",
+  "date": "2022-04-27",
+  "w": 1280,
+  "h": 935
+ },
+ "aerial_rover": {
+  "nasa_id": "PIA24625",
+  "camera": "aerial",
+  "what": "From the air: the rover below the helicopter",
+  "title": "Ingenuity Spots Perseverance From the Air",
+  "credit": "NASA/JPL-Caltech",
+  "date": "2021-04-27",
+  "w": 1280,
+  "h": 949
+ }
+}

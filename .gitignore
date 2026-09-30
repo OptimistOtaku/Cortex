@@ -1,0 +1,9 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+.pytest_cache/
+spikes/photos/_blurred/
+spikes/photos/own/
+.env
+demo_video/
